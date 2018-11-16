@@ -47,9 +47,6 @@ ongoing work.
 */
 
 
-
-
-#include <Arduino.h>
 #include <stdint.h>
 #include "Linduino.h"
 #include "LT_SPI.h"
@@ -93,30 +90,6 @@ void write_custom_table(uint8_t chip_select, struct table_coeffs coefficients[64
   }
   output_high(chip_select);
 }
-
-
-void write_custom_steinhart_hart(uint8_t chip_select, uint32_t steinhart_hart_coeffs[6], uint16_t start_address)
-{
-  int8_t i;
-  uint32_t coeff;
-
-  output_low(chip_select);
-
-  SPI.transfer(WRITE_TO_RAM);
-  SPI.transfer(highByte(start_address));
-  SPI.transfer(lowByte(start_address));
-
-  for (i = 0; i < 6; i++)
-  {
-    coeff = steinhart_hart_coeffs[i];
-    SPI.transfer((uint8_t)(coeff >> 24));
-    SPI.transfer((uint8_t)(coeff >> 16));
-    SPI.transfer((uint8_t)(coeff >> 8));
-    SPI.transfer((uint8_t)coeff);
-  }
-  output_high(chip_select);
-}
-
 
 
 
@@ -192,14 +165,10 @@ float print_conversion_result(uint32_t raw_conversion_result, uint8_t channel_ou
   if (channel_output == TEMPERATURE)
   {
     return scaled_result = float(signed_data) / 1024;
-    //Serial.print(F("  Temperature = "));
-    //Serial.println(scaled_result);
   }
   else if (channel_output == VOLTAGE)
   {
     return scaled_result = float(signed_data) / 2097152;
-    //Serial.print(F("  Direct ADC reading in V = "));
-    //Serial.println(scaled_result);
   }
   
 }
@@ -213,8 +182,7 @@ void read_voltage_or_resistance_results(uint8_t chip_select, uint8_t channel_num
 
   raw_data = transfer_four_bytes(chip_select, READ_FROM_RAM, start_address, 0);
   voltage_or_resistance_result = (float)raw_data/1024;
-  //Serial.print(F("  Voltage or resistance = "));
-  //Serial.println(voltage_or_resistance_result);
+
 }
 
 

@@ -46,7 +46,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define LT_SPI_H
 
 #include <stdint.h>
-#include <SPI.h>
 
 // Uncomment the following to use functions that implement LTC SPI routines
 

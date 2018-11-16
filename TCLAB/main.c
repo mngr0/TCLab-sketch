@@ -1,103 +1,21 @@
 #include <atmel_start.h>
-
-
-
-
-
-
-/*
-  TCLab Temperature Control Lab Firmware
-  Jeffrey Kantor
-  January, 2018
-
-  This firmware provides a high level interface to the Temperature Control Lab. The
-  firmware scans the serial port for case-insensitive commands. Each command returns
-  a result string.
-
-  A         software restart. Returns "Start".
-  LED float set LED to float for 10 sec. range 0 to 100. Returns actual float
-  P1 float  set pwm limit on heater 1, range 0 to 255. Default 200. Returns P1.
-  P2 float  set pwm limit on heater 2, range 0 to 255. Default 100. Returns P2.
-  Q1 float  set Heater 1, range 0 to 100. Returns value of Q1.
-  Q2 float  set Heater 2, range 0 to 100. Returns value of Q2.
-  R1        get value of Heater 1, range 0 to 100
-  R2        get value of Heater 2, range 0 to 100
-  SCAN      get values T1 T2 Q1 Q1 in line delimited values
-  T1        get Temperature T1. Returns value of T1 in °C.
-  T2        get Temperature T2. Returns value of T2 in °C.
-  VER       get firmware version string
-  X         stop, enter sleep mode. Returns "Stop".
-
-  Limits on the heater can be configured with the constants below.
-
-  Status is indicated by LED1 on the Temperature Control Lab. Status conditions are:
-
-      LED1        LED1
-      Brightness  State
-      ----------  -----
-      dim         steady     Normal operation, heaters off
-      bright      steady     Normal operation, heaters on
-      dim         blinking   High temperature alarm on, heaters off
-      bright      blinking   High temperature alarm on, heaters on
-
-  The Temperature Control Lab shuts down the heaters if it receives no host commands
-  during a timeout period (configure below), receives an "X" command, or receives
-  an unrecognized command from the host.
-
-  The constants can be used to configure the firmware.
-
-  Version History
-      1.0.1 first version included in the tclab package
-      1.1.0 added R1 and R2 commands to read current heater values
-            modified heater values to units of percent of full power
-            added P1 and P2 commands to set heater power limits
-            rewrote readCommand to avoid busy states
-            simplified LED status model
-      1.2.0 added LED command
-      1.2.1 correctly reset heater values on close
-            added version history
-      1.2.2 shorten version string for better display by TCLab
-      1.2.3 move baudrate to from 9600 to 115200
-      1.3.0 add SCAN function
-            report board type in version string
-      1.4.0 changed Q1 and Q2 to float from int
-*/
-
-// determine board type
-#if ARDUINO >= 100
-  #include "Arduino.h"
-#endif
-
-#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega168__)
-  String boardType = "Arduino Uno";
-  #define wSerial Serial
-#elif defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega16U4__)
-  String boardType = "Arduino Leonardo/Micro";
-  #include <WebUSB.h>
-  WebUSB WebUSBSerial(1, "webusb.github.io/arduino/demos/console/");
-  #define wSerial WebUSBSerial
-#elif defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
-  String boardType = "Arduino Mega";
-  #define wSerial ""
-#else 
-  String boardType = "Unknown board";
-#endif
-
-#include <Arduino.h>
+#include <stdio.h>
+#include <string.h>  
+#include "LTC2984_support_functions.h"
 #include "Linduino.h"
 #include "LT_SPI.h"
-
-
 #include "LTC2984_configuration_constants.h"
-#include "LTC2984_support_functions.h"
-#include "LTC2984_table_coeffs.h"
-#define CHIP_SELECT QUIKEVAL_CS
 
-// Enable debugging output
-const bool DEBUG = false;
+#include "LTC2984_table_coeffs.h"
+
+#define CHIP_SELECT 42
+
+
+//bool DEBUG = 0;
 
 // constants
-const String vers = "1.4.0";   // version of this firmware
+const char boardType[] = "samd21";
+const char vers[] = "1.4.0";   // version of this firmware
 const long baud = 115200;      // serial baud rate
 const char sp = ' ';           // command separator
 const char nl = '\n';          // command terminator
@@ -114,13 +32,13 @@ const int limT1   = 50;       // T1 high alarm (°C)
 const int limT2   = 50;       // T2 high alarm (°C)
 
 // LED1 levels
-const int hiLED   =  60;       // hi LED
-const int loLED   = hiLED/16;  // lo LED
+//const int hiLED   =  60;       // hi LED
+//const int loLED   = hiLED/16;  // lo LED
 
 // global variables
 char Buffer[64];               // buffer for parsing serial input
 int buffer_index = 0;          // index for Buffer
-String cmd;                    // command
+char cmd[32];                    // command
 float val;                       // command value
 int ledStatus;                 // 1: loLED
                                // 2: hiLED
@@ -139,7 +57,7 @@ bool webusb = false;        // boolean flag to select local or WebUSB interface
 
 
 void readCommand() {
-  if (!webusb) {
+  /*if (!webusb) {
     while (Serial && (Serial.available() > 0) && (newData == false)) {
       int byte = Serial.read();
       if ((byte != '\r') && (byte != nl) && (buffer_index < 64)) {
@@ -150,16 +68,17 @@ void readCommand() {
         newData = true;
       }
     }
-  }
+  }*/
+  
 }
 
 // for debugging with the serial monitor in Arduino IDE
 void echoCommand() {
   if (newData) {
-    Serial.write("Received Command: ");
-    Serial.write(Buffer, buffer_index);
-    Serial.write(nl);
-    Serial.flush();
+    //Serial.write("Received Command: ");
+    //Serial.write(Buffer, buffer_index);
+    //Serial.write(nl);
+    //Serial.flush();
   }
 }
 
@@ -171,18 +90,20 @@ inline float readTemperature(int pin) {
 
 void parseCommand(void) {
   if (newData) {
-    String read_ = String(Buffer);
+    char read_[64];
+	strcpy(Buffer,read_);// = String(Buffer);
 
     // separate command from associated data
-    int idx = read_.indexOf(sp);
-    cmd = read_.substring(0, idx);
-    cmd.trim();
-    cmd.toUpperCase();
+    //int idx = read_.indexOf(sp);
+    //cmd = read_.substring(0, idx);
+    //cmd.trim();
+   // cmd.toUpperCase();
 
     // extract data. toFloat() returns 0 on error
-    String data = read_.substring(idx + 1);
-    data.trim();
-    val = data.toFloat();
+    char data[32];
+	//data = read_.substring(idx + 1);
+    //data.trim();
+    //val = data.toFloat();
 
     // reset parameter for next command
     memset(Buffer, 0, sizeof(Buffer));
@@ -191,74 +112,84 @@ void parseCommand(void) {
   }
 }
 
-void sendResponse(String msg) {
-  if (!webusb)
-    Serial.println(msg);
+void sendResponseGOOD(char* msg) {
+  //if (!webusb)
+  //  Serial.println(msg);
   //else
   //  wSerial.println(msg);
 }
 
+void sendResponse(int msg) {
+	//if (!webusb)
+	//  Serial.println(msg);
+	//else
+	//  wSerial.println(msg);
+}
+
+
 void dispatchCommand(void) {
-  if (cmd == "A") {
-    setHeater1(0);
-    setHeater2(0);
-    sendResponse("Start");
+  if (strcmp(cmd, "A")) {
+    //setHeater1(0);
+    //setHeater2(0);
+    //sendResponse("Start");
   }
-  else if (cmd == "LED") {
-    ledTimeout = millis() + 10000;
-    LED = max(0, min(100, val));
-    sendResponse(String(LED));
-  }
-  else if (cmd == "P1") {
+  //else if (cmd == "LED") {
+  //  ledTimeout = millis() + 10000;
+  //  LED = max(0, min(100, val));
+  //  sendResponse(String(LED));
+  //}
+  else if ( strcmp(cmd, "P1")) {
     P1 = max(0, min(255, val));
-    sendResponse(String(P1));
+	char response[32];
+	sprintf(response, "%f",P1);
+    sendResponseGOOD(response);
   }
-  else if (cmd == "P2") {
+  else if (strcmp(cmd, "P2")) {
     P2 = max(0, min(255, val));
-    sendResponse(String(P2));
+    //sendResponse(String(P2));
   }
-  else if (cmd == "Q1") {
-    setHeater1(val);
-    sendResponse(String(Q1));
+  else if (strcmp(cmd, "Q1")) {
+    //setHeater1(val);
+    //sendResponse(String(Q1));
   }
-  else if (cmd == "Q2") {
-    setHeater2(val);
-    sendResponse(String(Q2));
+  else if (strcmp(cmd, "Q2")) {
+    //setHeater2(val);
+   // sendResponse(String(Q2));
   }
-  else if (cmd == "R1") {
-    sendResponse(String(Q1));
+  else if (strcmp(cmd, "R1")) {
+   // sendResponse(String(Q1));
   }
-  else if (cmd == "R2") {
-    sendResponse(String(Q2));
+  else if (strcmp(cmd, "R2")) {
+    //sendResponse(String(Q2));
   }
-  else if (cmd == "SCAN") {
-    sendResponse(String(readTemperature(pinT1)));
-    sendResponse(String(readTemperature(pinT2)));
-    sendResponse(String(Q1));
-    sendResponse(String(Q2));
+  else if (strcmp(cmd, "SCAN")) {
+    //sendResponse(String(readTemperature(pinT1)));
+    //sendResponse(String(readTemperature(pinT2)));
+    //sendResponse(String(Q1));
+   // sendResponse(String(Q2));
   }
-  else if (cmd == "T1") {
-    sendResponse(String(readTemperature(pinT1)));
+  else if (strcmp(cmd, "T1")) {
+   // sendResponse(String(readTemperature(pinT1)));
   }
-  else if (cmd == "T2") {
-    sendResponse(String(readTemperature(pinT2)));
+  else if (strcmp(cmd, "T2")) {
+    //sendResponse(String(readTemperature(pinT2)));
   }
-  else if (cmd == "VER") {
-    sendResponse("TCLab Firmware " + vers + " " + boardType);
+  else if (strcmp(cmd, "VER")) {
+  //  sendResponse("TCLab Firmware " + vers + " " + boardType);
   }
-  else if ((cmd == "X") or (cmd.length() > 0)) {
-    setHeater1(0);
-    setHeater2(0);
-    sendResponse(cmd);
+  else if ((strcmp(cmd, "X")) || (strlen(cmd) > 0)) {
+    //setHeater1(0);
+    //setHeater2(0);
+   // sendResponse(cmd);
   }
-  if (!webusb)
-    Serial.flush();
-  else
-  cmd = "";
+  //if (!webusb)
+    //Serial.flush();
+  //else
+  //cmd = "";
 }
 
 void checkAlarm(void) {
-  if ((readTemperature(pinT1) > limT1) or (readTemperature(pinT2) > limT2)) {
+  if ((readTemperature(pinT1) > limT1) || (readTemperature(pinT2) > limT2)) {
     alarmStatus = 1;
   }
   else {
@@ -268,8 +199,8 @@ void checkAlarm(void) {
 
 void updateStatus(void) {
   // determine led status
-  ledStatus = 1;
-  if ((Q1 > 0) or (Q2 > 0)) {
+  /*ledStatus = 1;
+  if ((Q1 > 0) || (Q2 > 0)) {
     ledStatus = 2;
   }
   if (alarmStatus > 0) {
@@ -302,19 +233,19 @@ void updateStatus(void) {
         }
         break;
     }   
-  }
+  }*/
 }
 
 // set Heater 1
 void setHeater1(float qval) {
   Q1 = max(0., min(qval, 100.));
-  analogWrite(pinQ1, (Q1*P1)/100);
+  //analogWrite(pinQ1, (Q1*P1)/100);
 }
 
 // set Heater 2
 void setHeater2(float qval) {
   Q2 = max(0., min(qval, 100.));
-  analogWrite(pinQ2, (Q2*P2)/100);
+  //analogWrite(pinQ2, (Q2*P2)/100);
 }
 
 void configure_channels()
@@ -344,8 +275,7 @@ void configure_channels()
 void configure_global_parameters() 
 {
   // -- Set global parameters
-  transfer_byte(CHIP_SELECT, WRITE_TO_RAM, 0xF0, TEMP_UNIT__C |
-    REJECTION__50_60_HZ);
+  transfer_byte(CHIP_SELECT, WRITE_TO_RAM, 0xF0, TEMP_UNIT__C |  REJECTION__50_60_HZ);
   // -- Set any extra delay between conversions (in this case, 0*100us)
   transfer_byte(CHIP_SELECT, WRITE_TO_RAM, 0xFF, 0);
 }
@@ -354,24 +284,24 @@ void configure_global_parameters()
 // arduino startup
 void setup() {
   //analogReference(EXTERNAL);
-  while (!Serial) {
-    ; // wait for serial port to connect.
-  }
-  Serial.begin(baud);
-  Serial.flush();
+  //while (!Serial) {
+  //  ; // wait for serial port to connect.
+  //}
+ // Serial.begin(baud);
+  //Serial.flush();
   
   //if (wSerial) {
   //  wSerial.begin(baud);
   //  wSerial.flush();
   // }
-  quikeval_SPI_init();          // Configure the spi port for 4MHz SCK
-  quikeval_SPI_connect(); 
-  pinMode(CHIP_SELECT, OUTPUT); 
+  //quikeval_SPI_init();          // Configure the spi port for 4MHz SCK
+  //quikeval_SPI_connect(); 
+  //pinMode(CHIP_SELECT, OUTPUT); 
   configure_channels();			
   configure_global_parameters();
-  setHeater1(0);
-  setHeater2(0);
-  ledTimeout = millis() + 1000;
+  //setHeater1(0);
+  //setHeater2(0);
+  //ledTimeout = millis() + 1000;
 }
 
 // arduino main event loop

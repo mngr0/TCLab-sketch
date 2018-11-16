@@ -76,7 +76,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     Library for LT_SPI: Routines to communicate with ATmega328P's hardware SPI port.
 */
 
-#include <Arduino.h>
 #include <stdint.h>
 #include <SPI.h>
 #include "Linduino.h"
@@ -145,13 +144,6 @@ void quikeval_SPI_connect()
   digitalWrite(QUIKEVAL_MUX_MODE_PIN, LOW);
 }
 
-// Configure the SPI port for 4MHz SCK.
-// This function or spi_enable() must be called
-// before using the other SPI routines.
-void quikeval_SPI_init(void)  // Initializes SPI
-{
-  spi_enable(SPI_CLOCK_DIV16);  //! 1) Configure the spi port for 4MHz SCK
-}
 
 // Setup the processor for hardware SPI communication.
 // Must be called before using the other SPI routines.
@@ -159,17 +151,13 @@ void quikeval_SPI_init(void)  // Initializes SPI
 // calls this function.
 void spi_enable(uint8_t spi_clock_divider) // Configures SCK frequency. Use constant defined in header file.
 {
-  //pinMode(SCK, OUTPUT);             //! 1) Setup SCK as output
-  //pinMode(MOSI, OUTPUT);            //! 2) Setup MOSI as output
-  //pinMode(QUIKEVAL_CS, OUTPUT);     //! 3) Setup CS as output
-  SPI.begin();
-  SPI.setClockDivider(spi_clock_divider);
+
 }
 
 // Disable the SPI hardware port
 void spi_disable()
 {
-  SPI.end();
+
 }
 
 // Write a data byte using the SPI hardware

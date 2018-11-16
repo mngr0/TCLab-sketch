@@ -48,13 +48,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef LINDUINO_H
 #define LINDUINO_H
 
-#include <Arduino.h>  // typedefs use types defined in this header file.
-
 //! @name LINDUINO PIN ASSIGNMENTS
 //! @{
 
 #define QUIKEVAL_GPIO 9          //!< Linduino QuikEval GPIO pin (QuikEval connector pin 14) connects to Arduino pin 9
-#define QUIKEVAL_CS SS           //!< QuikEval CS pin (SPI chip select on QuikEval connector pin 6) connects to Arduino SS pin.
+#define QUIKEVAL_CS 10           //!< QuikEval CS pin (SPI chip select on QuikEval connector pin 6) connects to Arduino SS pin.
 #define QUIKEVAL_MUX_MODE_PIN 8  /*!< QUIKEVAL_MUX_MODE_PIN defines the control pin for the QuikEval MUX.
 The I2C port's SCL and the SPI port's SCK signals share the same pin on the Linduino's QuikEval connector.
 Additionally, the I2C port's SDA and the SPI port's MOSI signals share the same pin on the Linduino's QuikEval connector.
@@ -65,14 +63,14 @@ The control pin to switch the MUX is defined as QUIKEVAL_MUX_MODE_PIN (Arduino p
 // Macros
 //! Set "pin" low
 //! @param pin pin to be driven LOW
-#define output_low(pin)   digitalWrite(pin, LOW)
+#define output_low(pin)  gpio_set_pin_level(pin,0)
 //! Set "pin" high
 //! @param pin pin to be driven HIGH
-#define output_high(pin)  digitalWrite(pin, HIGH)
+#define output_high(pin)  gpio_set_pin_level(pin,1)
 //! Return the state of pin "pin"
 //! @param pin pin to be read (HIGH or LOW).
 //! @return the state of pin "pin"
-#define input(pin)        digitalRead(pin)
+#define input(pin)        gpio_get_pin_level(pin)
 
 //! @name ENDIAN DEPENDENT BYTE INDEXES
 //! @{
