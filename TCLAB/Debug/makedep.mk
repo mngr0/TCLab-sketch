@@ -52,3 +52,7 @@ hpl\sysctrl\hpl_sysctrl.c
 
 main.c
 
+LTC2984_support_functions.c
+
+LT_SPI.c
+

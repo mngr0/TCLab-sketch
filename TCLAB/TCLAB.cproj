@@ -20,10 +20,10 @@
     <OverrideVtor>false</OverrideVtor>
     <CacheFlash>true</CacheFlash>
     <ProgFlashFromRam>true</ProgFlashFromRam>
-    <RamSnippetAddress />
+    <RamSnippetAddress>0x20000000</RamSnippetAddress>
     <UncachedRange />
     <preserveEEPROM>true</preserveEEPROM>
-    <OverrideVtorValue />
+    <OverrideVtorValue>exception_table</OverrideVtorValue>
     <BootSegment>2</BootSegment>
     <ResetRule>0</ResetRule>
     <eraseonlaunchrule>0</eraseonlaunchrule>
@@ -280,6 +280,8 @@
       <Value>../hpl/sysctrl</Value>
       <Value>../hri</Value>
       <Value>%24(PackRepoDir)\Atmel\SAMD21_DFP\1.3.331\samd21a\include</Value>
+      <Value>..</Value>
+      <Value>U:\TCLAB\TCLAB</Value>
     </ListValues>
   </armgcc.compiler.directories.IncludePaths>
   <armgcc.compiler.optimization.level>Optimize (-O1)</armgcc.compiler.optimization.level>
@@ -298,6 +300,7 @@
     </ListValues>
   </armgcc.linker.libraries.LibrarySearchPaths>
   <armgcc.linker.optimization.GarbageCollectUnusedSections>True</armgcc.linker.optimization.GarbageCollectUnusedSections>
+  <armgcc.linker.memorysettings.ExternalRAM />
   <armgcc.linker.miscellaneous.LinkerFlags>-Tsamd21j18a_flash.ld</armgcc.linker.miscellaneous.LinkerFlags>
   <armgcc.assembler.general.IncludePaths>
     <ListValues>
@@ -341,6 +344,10 @@
   <armgcc.preprocessingassembler.debugging.DebugLevel>Default (-Wa,-g)</armgcc.preprocessingassembler.debugging.DebugLevel>
 </ArmGcc>
     </ToolchainSettings>
+    <UsesExternalMakeFile>False</UsesExternalMakeFile>
+    <OutputDirectory>$(MSBuildProjectDirectory)\$(Configuration)</OutputDirectory>
+    <BuildTarget>all</BuildTarget>
+    <CleanTarget>clean</CleanTarget>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="atmel_start.c">
@@ -713,12 +720,12 @@
     <None Include="Device_Startup\samd21j18a_sram.ld">
       <SubType>compile</SubType>
     </None>
-    <None Include="LTC2984_support_functions.cpp">
+    <Compile Include="LTC2984_support_functions.c">
       <SubType>compile</SubType>
-    </None>
-    <None Include="LT_SPI.cpp">
+    </Compile>
+    <Compile Include="LT_SPI.c">
       <SubType>compile</SubType>
-    </None>
+    </Compile>
   </ItemGroup>
   <Import Project="$(AVRSTUDIO_EXE_PATH)\\Vs\\Compiler.targets" />
 </Project>

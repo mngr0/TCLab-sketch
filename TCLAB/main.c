@@ -1,17 +1,14 @@
 #include <atmel_start.h>
 #include <stdio.h>
 #include <string.h>  
-#include "LTC2984_support_functions.h"
-#include "Linduino.h"
-#include "LT_SPI.h"
-#include "LTC2984_configuration_constants.h"
-
-#include "LTC2984_table_coeffs.h"
+#include <LTC2984_support_functions.h>
+#include <LTC2984_configuration_constants.h>
+#include <LTC2984_table_coeffs.h>
 
 #define CHIP_SELECT 42
 
 
-//bool DEBUG = 0;
+//int DEBUG = 0;
 
 // constants
 const char boardType[] = "samd21";
@@ -308,7 +305,7 @@ void setup() {
 void loop() {
   webusb = false;
   readCommand();
-  if (DEBUG) echoCommand();
+  //if (DEBUG) echoCommand();
   parseCommand();
   dispatchCommand();
   checkAlarm();
@@ -324,9 +321,14 @@ int main(void)
 {
 	/* Initializes MCU, drivers and middleware */
 	atmel_start_init();
-	setup();
+	//setup();
 	/* Replace with your application code */
+	struct io_descriptor *io;
+	usart_sync_get_io_descriptor(&USART_0, &io);
+	usart_sync_enable(&USART_0);
+	io_write(io, (uint8_t *)"Hello World!", 12);
+	
 	while (1) {
-		loop();
+	//	loop();
 	}
 }

@@ -46,11 +46,10 @@ http://store.arduino.cc , and consider a purchase that will help fund their
 ongoing work.
 */
 
-
+#include <atmel_start.h>
 #include <stdint.h>
 #include "Linduino.h"
 #include "LT_SPI.h"
-#include <SPI.h>
 #include "LTC2984_configuration_constants.h"
 #include "LTC2984_table_coeffs.h"
 #include "LTC2984_support_functions.h"
@@ -72,21 +71,21 @@ void write_custom_table(uint8_t chip_select, struct table_coeffs coefficients[64
 
   output_low(chip_select);
 
-  SPI.transfer(WRITE_TO_RAM);
-  SPI.transfer(highByte(start_address));
-  SPI.transfer(lowByte(start_address));
+  //SPI.transfer(WRITE_TO_RAM);
+  //SPI.transfer(highByte(start_address));
+  //SPI.transfer(lowByte(start_address));
 
   for (i=0; i< table_length; i++)
   {
     coeff = coefficients[i].measurement;
-    SPI.transfer((uint8_t)(coeff >> 16));
-    SPI.transfer((uint8_t)(coeff >> 8));
-    SPI.transfer((uint8_t)coeff);
+//     SPI.transfer((uint8_t)(coeff >> 16));
+//     SPI.transfer((uint8_t)(coeff >> 8));
+//     SPI.transfer((uint8_t)coeff);
 
     coeff = coefficients[i].temperature;
-    SPI.transfer((uint8_t)(coeff >> 16));
-    SPI.transfer((uint8_t)(coeff >> 8));
-    SPI.transfer((uint8_t)coeff);
+//     SPI.transfer((uint8_t)(coeff >> 16));
+//     SPI.transfer((uint8_t)(coeff >> 8));
+//     SPI.transfer((uint8_t)coeff);
   }
   output_high(chip_select);
 }
@@ -164,13 +163,13 @@ float print_conversion_result(uint32_t raw_conversion_result, uint8_t channel_ou
   // Translate and print result
   if (channel_output == TEMPERATURE)
   {
-    return scaled_result = float(signed_data) / 1024;
+    return  (float)(signed_data) / 1024;
   }
   else if (channel_output == VOLTAGE)
   {
-    return scaled_result = float(signed_data) / 2097152;
+    return (float)(signed_data) / 2097152;
   }
-  
+  return 0;
 }
 
 
@@ -200,8 +199,8 @@ uint32_t transfer_four_bytes(uint8_t chip_select, uint8_t ram_read_or_write, uin
   uint8_t tx[7], rx[7];
 
   tx[6] = ram_read_or_write;
-  tx[5] = highByte(start_address);
-  tx[4] = lowByte(start_address);
+//   tx[5] = highByte(start_address);
+//   tx[4] = lowByte(start_address);
   tx[3] = (uint8_t)(input_data >> 24);
   tx[2] = (uint8_t)(input_data >> 16);
   tx[1] = (uint8_t)(input_data >> 8);
@@ -240,15 +239,15 @@ uint16_t get_start_address(uint16_t base_address, uint8_t channel_number)
 }
 
 
-bool is_number_in_array(uint8_t number, uint8_t *array, uint8_t array_length)
+int is_number_in_array(uint8_t number, uint8_t *array, uint8_t array_length)
 // Find out if a number is an element in an array
 {
-  bool found = false;
+  int found = 0;
   for (uint8_t i=0; i< array_length; i++)
   {
     if (number == array[i])
     {
-      found = true;
+      found = 1;
     }
   }
   return found;
