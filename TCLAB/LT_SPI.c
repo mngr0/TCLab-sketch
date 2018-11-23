@@ -87,48 +87,29 @@ void spi_transfer_byte(uint8_t cs_pin, uint8_t tx, uint8_t *rx)
   output_low(cs_pin);                 //! 1) Pull CS low
 
   //*rx = SPI.transfer(tx);             //! 2) Read byte and send byte
+  struct io_descriptor *io;
+  rx[0]=tx;
+ 	spi_m_sync_get_io_descriptor(&SPI_0, &io);
 
+ 	io_write(io, rx, 1);
   output_high(cs_pin);                //! 3) Pull CS high
 }
 
-// Reads and sends a word
-// Return 0 if successful, 1 if failed
-void spi_transfer_word(uint8_t cs_pin, uint16_t tx, uint16_t *rx)
-{
-  union
-  {
-    uint8_t b[2];
-    uint16_t w;
-  } data_tx;
 
-  union
-  {
-    uint8_t b[2];
-    uint16_t w;
-  } data_rx;
-
-  data_tx.w = tx;
-
-  output_low(cs_pin);                         //! 1) Pull CS low
-
-  //data_rx.b[1] = SPI.transfer(data_tx.b[1]);  //! 2) Read MSB and send MSB
-  //data_rx.b[0] = SPI.transfer(data_tx.b[0]);  //! 3) Read LSB and send LSB
-
-  *rx = data_rx.w;
-
-  output_high(cs_pin);                        //! 4) Pull CS high
-}
 
 // Reads and sends a byte array
 void spi_transfer_block(uint8_t cs_pin, uint8_t *tx, uint8_t *rx, uint8_t length)
 {
   int8_t i;
-
+  struct io_descriptor *io;
+ 	spi_m_sync_get_io_descriptor(&SPI_0, &io);
   output_low(cs_pin);                 //! 1) Pull CS low
 
-  for (i=(length-1);  i >= 0; i--)
+  for (i=(length-1);  i >= 0; i--){//CHI CAZZO FA I CICLI AL CONTRARIO
     //rx[i] = SPI.transfer(tx[i]);    //! 2) Read and send byte array
-
+      rx[i]=tx[i]
+     	io_write(io, &rx[i], 1);
+  }
   output_high(cs_pin);                //! 3) Pull CS high
 }
 
@@ -136,7 +117,7 @@ void spi_transfer_block(uint8_t cs_pin, uint8_t *tx, uint8_t *rx, uint8_t length
 void quikeval_SPI_connect()
 {
   //pinMode(QUIKEVAL_CS, OUTPUT);
-  output_high(QUIKEVAL_CS); //! 1) Pull Chip Select High
+  //output_high(QUIKEVAL_CS); //! 1) Pull Chip Select High
 
   //! 2) Enable Main SPI
   //pinMode(QUIKEVAL_MUX_MODE_PIN, OUTPUT);
@@ -150,11 +131,11 @@ void quikeval_SPI_connect()
 // calls this function.
 void spi_enable(uint8_t spi_clock_divider) // Configures SCK frequency. Use constant defined in header file.
 {
-
+   	spi_m_sync_enable(&SPI_0);
 }
 
 // Disable the SPI hardware port
 void spi_disable()
 {
-
+ 	spi_m_sync_disable(&SPI_0);
 }

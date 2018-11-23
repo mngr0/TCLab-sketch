@@ -1,6 +1,6 @@
 #include <atmel_start.h>
 #include <stdio.h>
-#include <string.h>  
+#include <string.h>
 #include <LTC2984_support_functions.h>
 #include <LTC2984_configuration_constants.h>
 #include <LTC2984_table_coeffs.h>
@@ -25,8 +25,8 @@ const int pinQ2   = 5;         // Q2
 const int pinLED1 = 9;         // LED1
 
 // temperature alarm limits
-const int limT1   = 50;       // T1 high alarm (°C)
-const int limT2   = 50;       // T2 high alarm (°C)
+const int limT1   = 50;       // T1 high alarm (ï¿½C)
+const int limT2   = 50;       // T2 high alarm (ï¿½C)
 
 // LED1 levels
 //const int hiLED   =  60;       // hi LED
@@ -66,7 +66,7 @@ void readCommand() {
       }
     }
   }*/
-  
+
 }
 
 // for debugging with the serial monitor in Arduino IDE
@@ -79,7 +79,7 @@ void echoCommand() {
   }
 }
 
-// return thermister temperature in °C
+// return thermister temperature in ï¿½C
 inline float readTemperature(int pin) {
   //return analogRead(pin) * 0.3223 - 50.0;
   return measure_channel(CHIP_SELECT, 4, TEMPERATURE);
@@ -229,7 +229,7 @@ void updateStatus(void) {
           analogWrite(pinLED1, loLED);
         }
         break;
-    }   
+    }
   }*/
 }
 
@@ -251,12 +251,12 @@ void configure_channels()
   uint32_t channel_assignment_data;
 
   // ----- Channel 2: Assign Sense Resistor -----
-  channel_assignment_data = 
+  channel_assignment_data =
     SENSOR_TYPE__SENSE_RESISTOR |
     (uint32_t) 0x19000 << SENSE_RESISTOR_VALUE_LSB;		// sense resistor - value: 100.
   assign_channel(CHIP_SELECT, 2, channel_assignment_data);
   // ----- Channel 4: Assign Thermistor 44006 10K@25C -----
-  channel_assignment_data = 
+  channel_assignment_data =
     SENSOR_TYPE__THERMISTOR_44006_10K_25C |
     THERMISTOR_RSENSE_CHANNEL__2 |
     THERMISTOR_DIFFERENTIAL |
@@ -269,7 +269,7 @@ void configure_channels()
 
 
 
-void configure_global_parameters() 
+void configure_global_parameters()
 {
   // -- Set global parameters
   transfer_byte(CHIP_SELECT, WRITE_TO_RAM, 0xF0, TEMP_UNIT__C |  REJECTION__50_60_HZ);
@@ -284,17 +284,18 @@ void setup() {
   //while (!Serial) {
   //  ; // wait for serial port to connect.
   //}
- // Serial.begin(baud);
+  // Serial.begin(baud);
+  usart_sync_enable(&USART_0);
   //Serial.flush();
-  
+
   //if (wSerial) {
   //  wSerial.begin(baud);
   //  wSerial.flush();
   // }
   //quikeval_SPI_init();          // Configure the spi port for 4MHz SCK
-  //quikeval_SPI_connect(); 
-  //pinMode(CHIP_SELECT, OUTPUT); 
-  configure_channels();			
+  //quikeval_SPI_connect();
+  //pinMode(CHIP_SELECT, OUTPUT);
+  configure_channels();
   configure_global_parameters();
   //setHeater1(0);
   //setHeater2(0);
@@ -321,13 +322,12 @@ int main(void)
 {
 	/* Initializes MCU, drivers and middleware */
 	atmel_start_init();
-	//setup();
+	setup();
 	/* Replace with your application code */
 	struct io_descriptor *io;
 	usart_sync_get_io_descriptor(&USART_0, &io);
-	usart_sync_enable(&USART_0);
 	io_write(io, (uint8_t *)"Hello World!", 12);
-	
+
 	while (1) {
 	//	loop();
 	}
